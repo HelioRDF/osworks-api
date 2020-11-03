@@ -2,6 +2,8 @@ package com.algaworks.osworks.domain.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -10,6 +12,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -17,6 +20,7 @@ import javax.validation.groups.ConvertGroup;
 import javax.validation.groups.Default;
 
 import com.algaworks.osworks.domain.ValidationGroups.ClientId;
+import com.algaworks.osworks.domain.exception.NegocioException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
@@ -28,7 +32,7 @@ public class OrdemServico {
 	private Long id;
 
 	@Valid
-	@ConvertGroup(from=Default.class, to= ClientId.class)
+	@ConvertGroup(from = Default.class, to = ClientId.class)
 	@ManyToOne
 	@NotNull
 	private Cliente cliente;
@@ -46,6 +50,9 @@ public class OrdemServico {
 
 	@JsonProperty(access = Access.READ_ONLY)
 	private OffsetDateTime dataFinalizacao;
+
+	@OneToMany(mappedBy = "ordemServico")
+	private List<Comentario> comentarios = new ArrayList<>();
 
 	@Override
 	public int hashCode() {
@@ -161,5 +168,22 @@ public class OrdemServico {
 		this.dataFinalizacao = dataFinalizacao;
 	}
 
+	public List<Comentario> getComentarios() {
+		return comentarios;
+	}
+
+	public void setComentarios(List<Comentario> comentarios) {
+		this.comentarios = comentarios;
+	}
+
+	public void finalizar() {
+
+		if (!StatusOrdemServico.ABERTA.equals(getStatus())) {
+			throw new NegocioException("Ordem de serviço não pode ser finalizada!");
+		}
+		setStatus(StatusOrdemServico.FINALIZADA);
+		setDataFinalizacao(OffsetDateTime.now());
+
+	}
 
 }
